@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Code Sample – Alexander R. McAllister</title><link rel="stylesheet" href="style.css"></head>
+<body class="site">
+<nav class="site-nav"><a href="index.html">CV</a><a href="writing-sample.html">Writing Sample</a><a href="code-sample.html" aria-current="page">Code Sample</a></nav>
+<h1>ACA Dependent-Coverage Mandate: Replication</h1>
+<p class="meta">Alexander McAllister · MPA 2040 (Prof. Thakral), Lab 3 · Stata</p>
+<h2>Paper</h2>
+<p>Akosa Antwi, Yaa, Asako S. Moriya, and Kosali Simon. 2013. “Effects of Federal Policy to Insure Young Adults: Evidence from the 2010 Affordable Care Act's Dependent-Coverage Mandate.” <em>American Economic Journal: Economic Policy</em> 5(4): 1–28.</p>
+<h2>Replication target</h2>
+<p>Table 1 (summary statistics: demographic, socioeconomic and insurance characteristics) and Table 2 (main DD results: effect of the ACA on coverage of young adults aged 19–25).</p>
+<h2>Research design</h2>
+<p>Difference-in-differences around the age-26 cutoff. Ages 19–25 (eligible, <code>fedelig=1</code>) are compared with ages 16–18 and 27–29, before and after the mandate took effect. The DD estimate is the coefficient on <code>elig_oct10</code> (eligible × after Oct 2010).</p>
+<p class="dl"><a href="assets/mcallister_aca_dd_estimate.pdf">Annotated walkthrough with Stata output (PDF)</a> · <a href="assets/aca_dd_code_sample.do">Download .do file</a> · <a href="https://github.com/political-economy-analysis/aca-dd-code-sample">GitHub repository (with data)</a></p>
+<h2>Code</h2>
+<pre><code><span class="c">* Data: https://github.com/political-economy-analysis/aca-dd-code-sample/blob/main/lab3.dta.zip</span>
+<span class="c">* (unzip to lab3.dta and set the cd path below to the folder containing it)</span>
+
+<span class="k">clear all</span>
+
+cd<span class="s">&quot;/Users/alexander/Documents/phd/stata/&quot;</span>
+
+<span class="k">log using</span> lab3.log, replace
+
+<span class="k">use</span> lab3.dta, clear
+
+<span class="k">display</span> <span class="s">&quot;Table 1. Demographic, Socioeconomic and Insurance Characteristics&quot;</span>
+
+<span class="c">* all observations</span>
+<span class="k">sum</span> anyhi emphi_dep emphi indiv govhi employed unemployed age white black hispanic mar ft_student hsdo hsg somcol colgrd bad_hlth [weight=p_weight]
+
+<span class="c">* by age group</span>
+<span class="k">forvalues</span> k = 1 / 3 {
+    <span class="k">sum</span> anyhi emphi_dep emphi indiv govhi employed unemployed age white black hispanic mar ft_student hsdo hsg somcol colgrd bad_hlth [weight=p_weight] <span class="k">if</span> age_group==`k&#x27;
+}
+
+<span class="k">local</span> effects mar_sep10 after_oct10 fedelig elig_mar10 elig_oct10
+<span class="k">local</span> exp_vars age17-age18  age20-age25 age27-age29 trend female ue hispanic white asian other student mar fpl_ratio fpl_ratio_2 ue_treat y2009 y2010 month2-month12 st_trend_1-st_trend_55
+<span class="k">display</span> <span class="s">&quot;Table 2: Effect of ACA on Coverage of Young Adults 19-25 years: Main DD Results (regression)&quot;</span>
+<span class="k">foreach</span> instype in anyhi emphi_dep indiv emphi govhi{
+    <span class="k">areg</span> `instype&#x27; `effects&#x27; `exp_vars&#x27; [weight=p_weight], <span class="k">absorb</span>(fipstate) <span class="k">cluster</span>(fipstate)
+}
+
+<span class="k">display</span> <span class="s">&quot;Table 2: Effect of ACA on Coverage of Young Adults 19-25 years: Main DD Results (unconditional DD)&quot;</span>
+<span class="k">sum</span> anyhi emphi_dep indiv emphi govhi [weight=p_weight] <span class="k">if</span> after_oct10==0 &amp; mar_sep10 ==0 &amp; fedelig==1
+<span class="k">sum</span> anyhi emphi_dep indiv emphi govhi [weight=p_weight] <span class="k">if</span> after_oct10==0 &amp; mar_sep10 ==0 &amp; fedelig==0
+<span class="k">sum</span> anyhi emphi_dep indiv emphi govhi [weight=p_weight] <span class="k">if</span> after_oct10==1 &amp; fedelig==1
+<span class="k">sum</span> anyhi emphi_dep indiv emphi govhi [weight=p_weight] <span class="k">if</span> after_oct10==1 &amp; fedelig==0
+
+<span class="c">* CLOSE LOG FILE</span>
+<span class="k">log close</span>
+</code></pre>
+</body></html>
